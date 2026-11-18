@@ -32,12 +32,12 @@ def convert_decimal_types_to_float(table: pa.table, target_type: pa.DataType | N
     fields = []
     for field in table.schema:
         if pa.types.is_decimal(field.type):
-            new_field = pa.field(field.name, target_type, field.nullable)
+            new_field = field.with_type(target_type)
         else:
             new_field = field
         fields.append(new_field)
 
-    schema = pa.schema(fields)
+    schema = pa.schema(fields, metadata=table.schema.metadata)
     return table.cast(schema)
 
 
@@ -51,15 +51,15 @@ def convert_large_types(table: pa.Table) -> pa.Table:
     fields = []
     for field in table.schema:
         if pa.types.is_large_list(field.type):
-            new_field = pa.field(field.name, pa.list_(field.type.value_type), field.nullable)
+            new_field = field.with_type(pa.list_(field.type.value_field))
         elif pa.types.is_large_binary(field.type):
-            new_field = pa.field(field.name, pa.binary(), field.nullable)
+            new_field = field.with_type(pa.binary())
         elif pa.types.is_large_string(field.type):
-            new_field = pa.field(field.name, pa.string(), field.nullable)
+            new_field = field.with_type(pa.string())
         else:
             new_field = field
         fields.append(new_field)
-    schema = pa.schema(fields)
+    schema = pa.schema(fields, metadata=table.schema.metadata)
     return table.cast(schema)
 
 
